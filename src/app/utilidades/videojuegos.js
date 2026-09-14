@@ -5,44 +5,36 @@ nombre: string;
 genero: string;
 }
 */
+import {
+  obtenerVideojuegos,
+  registrarVideojuego,
+} from "../../../DB/VideoJuegos/videojuegos";
 
-const videojuegos = [
-    {
-        id: 1,
-        nombre: "Videojuego Uno",
-        genero: "Acción",
-    },
-    {
-        id: 2,
-        nombre: "Videojuego Dos",
-        genero: "Aventura",
-    },
-    {
-        id: 3,
-        nombre: "Videojuego Tres",
-        genero: "Deportes",
-    },
-    {
-        id: 4,
-        nombre: "Videojuego Cuatro",
-        genero: "Estrategia",
-    },
-    {
-        id: 5,
-        nombre: "Videojuego Cinco",
-        genero: "Simulación",
-    }
-];
-
-export function obtenerVideojuegos(){
-    return videojuegos;
+export async function getVideojuegos() {
+  const videojuegosDB = await obtenerVideojuegos();
+  const videojuegos = videojuegosDB.map((videojuego) => ({
+    id: videojuego.id,
+    nombre: videojuego.nombre,
+    genero: videojuego.genero,
+  }));
+  return videojuegos;
 }
 
-export function registrarVideojuego(videojuego){
-    videojuegos.push(videojuego);
-    return videojuego;
+export async function registrarUnVideojuego(videojuego) {
+  const nuevoVideojuego = {
+    nombre: videojuego.nombre,
+    genero: videojuego.genero,
+  };
+  const existeVideojuego = determinarSiExisteElVideojuego(
+    nuevoVideojuego.nombre
+  );
+  if (existeVideojuego) {
+    throw new Error("El videojuego ya existe.");
+  }
+  await registrarVideojuego(nuevoVideojuego.nombre, nuevoVideojuego.genero);
 }
 
-export function determinarSiExisteElVideojuego(nombre){
-    return videojuegos.some((videojuego) => videojuego.nombre === nombre);
+export async function determinarSiExisteElVideojuego(nombre) {
+  const videojuegos = await obtenerVideojuegos();
+  return videojuegos.some((v) => v.nombre === nombre);
 }

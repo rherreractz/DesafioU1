@@ -1,15 +1,13 @@
 import { NextResponse, NextRequest } from "next/server";
 import {
-  videojuegos,
-  obtenerVideojuegos,
-  registrarVideojuego,
-  determinarSiExisteElVideojuego,
-} from "@/app/utilidades/videojuegos";
+  getVideojuegos,
+  registrarUnVideojuego,
+} from "../../utilidades/videojuegos";
 
 export async function GET(request) {
   try {
     console.log("Obteniendo videojuegos...");
-    const videojuegos = obtenerVideojuegos();
+    const videojuegos = await getVideojuegos();
     if (!videojuegos || videojuegos.length === 0) {
       return new NextResponse(
         JSON.stringify({ error: "No hay videojuegos registrados" }),
@@ -33,12 +31,6 @@ export async function POST(request) {
     try {
         const objeto = await request.json();
         console.log("Registrando videojuego...");
-        if (determinarSiExisteElVideojuego(objeto.nombre)) {
-            return new NextResponse(
-                JSON.stringify({ error: "El videojuego ya existe."}),
-                { status: 400, statusText: "Bad Request"}
-            );
-        }
         const nuevoVideojuego = {
             id: videojuegos.length + 1,
             nombre: objeto.nombre,
@@ -56,7 +48,7 @@ export async function POST(request) {
                 { status: 400, statusText: "Bad Request"}
             );
         }
-        registrarVideojuego(nuevoVideojuego);
+        await registrarUnVideojuego(nuevoVideojuego);
         return new NextResponse(JSON.stringify(nuevoVideojuego), {
             status: 201,
             statusText: "Created",

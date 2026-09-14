@@ -1,47 +1,31 @@
 import { NextResponse, NextRequest } from "next/server";
 import {
-  jugadores,
-  obtenerJugadores,
-  registrarJugador,
-  determinarSiElGamertagExiste,
-  buscarJugadorPorNombre,
-  buscarJugadorPorGamertag,
-} from "@/app/utilidades/jugadores";
-
+  crearJugador,
+  getJugadores,
+  buscarJugadores,
+  
+} from '../../utilidades/jugadores';
 export async function GET(request) {
   try {
     // Obtener parametros de consulta de la URL
     const params = new URL(request.url).searchParams;
     const nombre = params.get("nombre");
-    const gamertag = params.get("gamertag");
     if (nombre) {
-      const jugador = buscarJugadorPorNombre(nombre);
-      if (jugador) {
+      const jugadores = await buscarJugadores(nombre);
+      if (jugadores.length > 0) {
         return new NextResponse(
-          JSON.stringify(jugador, { status: 200, statusText: "OK" })
+          JSON.stringify(jugadores, { status: 200, statusText: "OK" })
         );
       } else {
         return new NextResponse(
-          JSON.stringify({ error: "Jugador no encontrado" }),
-          { status: 404, statusText: "Not Found" }
-        );
-      }
-    } else if (gamertag) {
-      const jugador = buscarJugadorPorGamertag(gamertag);
-      if (jugador) {
-        return new NextResponse(
-          JSON.stringify(jugador, { status: 200, statusText: "OK" })
-        );
-      } else {
-        return new NextResponse(
-          JSON.stringify({ error: "Jugador no encontrado" }),
+          JSON.stringify({ error: "Jugador(es) no encontrado(s)" }),
           { status: 404, statusText: "Not Found" }
         );
       }
     } else {
       console.log("Obteniendo jugadores...");
 
-      const jugadores = obtenerJugadores();
+      const jugadores = await getJugadores();
       if (!jugadores || jugadores.length === 0) {
         return new NextResponse(
           JSON.stringify({ error: "No hay jugadores registrados" }),
@@ -66,11 +50,9 @@ export async function POST(request) {
   try {
     const objeto = await request.json();
     const nuevoJugador = {
-      id: jugadores.length + 1,
       nombre: objeto.nombre,
       gamertag: objeto.gamertag,
       correo: objeto.correo,
-      fechaRegistro: new Date().toISOString(),
     };
     if (!nuevoJugador.nombre) {
       return new NextResponse(
@@ -90,13 +72,9 @@ export async function POST(request) {
         { status: 400, statusText: "Bad Request" }
       );
     }
-    if (determinarSiElGamertagExiste(nuevoJugador.gamertag)) {
-      return new NextResponse(
-        JSON.stringify({ error: "El gamertag ya existe" }),
-        { status: 400, statusText: "Bad Request" }
-      );
-    }
-    registrarJugador(nuevoJugador);
+    await crearJugador(
+     nuevoJugador
+    );
     console.log("Jugador agregado:", nuevoJugador);
     return new NextResponse(
       JSON.stringify(nuevoJugador, { status: 201, statusText: "Created" })
