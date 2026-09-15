@@ -1,89 +1,113 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import {
   crearJugador,
   getJugadores,
   buscarJugadores,
-  
-} from '../../utilidades/jugadores';
+} from "../../utilidades/jugadores";
+
 export async function GET(request) {
   try {
-    // Obtener parametros de consulta de la URL
     const params = new URL(request.url).searchParams;
     const nombre = params.get("nombre");
-    if (nombre) {
-      const jugadores = await buscarJugadores(nombre);
-      if (jugadores.length > 0) {
-        return new NextResponse(
-          JSON.stringify(jugadores, { status: 200, statusText: "OK" })
-        );
+    const gamertag = params.get("gamertag");
+
+    // 1. Si enviaron filtro por nombre o por gamertag
+    const criterioBusqueda = gamertag || nombre;
+
+    if (criterioBusqueda) {
+      const jugadores = await buscarJugadores(criterioBusqueda);
+      
+      if (jugadores && jugadores.length > 0) {
+        return NextResponse.json(jugadores, { status: 200 });
       } else {
-        return new NextResponse(
-          JSON.stringify({ error: "Jugador(es) no encontrado(s)" }),
-          { status: 404, statusText: "Not Found" }
+        return NextResponse.json(
+          { error: "Jugador(es) no encontrado(s)" },
+          { status: 404 }
         );
       }
     } else {
-      console.log("Obteniendo jugadores...");
+      // 2. Si no hay parámetros de búsqueda, obtiene todos los jugadores
+      console.log("Obteniendo todos los jugadores...");
 
       const jugadores = await getJugadores();
-      if (!jugadores || jugadores.length === 0) {
-        return new NextResponse(
-          JSON.stringify({ error: "No hay jugadores registrados" }),
-          { status: 404, statusText: "Not Found" }
-        );
-      }
-
-      return new NextResponse(
-        JSON.stringify(jugadores, { status: 200, statusText: "OK" })
-      );
+      
+      // Devolver [] con status 200 si no hay registros para no romper tablas del front
+      return NextResponse.json(jugadores || [], { status: 200 });
     }
   } catch (error) {
     console.error("Error al obtener jugadores:", error);
-    return new NextResponse(
-      JSON.stringify({ error: "Error al obtener jugadores" }),
-      { status: 500, statusText: "Internal Server Error" }
+    return NextResponse.json(
+      { error: "Error interno al obtener jugadores" },
+      { status: 500 }
     );
   }
 }
 
 export async function POST(request) {
   try {
-    const objeto = await request.json();
+    let objeto;
+    try {
+      objeto = await request.json();
+    } catch (e) {
+      return NextResponse.json(
+        { error: "JSON inválido o mal formado." },
+        { status: 400 }
+      );
+    }
+
     const nuevoJugador = {
       nombre: objeto.nombre,
       gamertag: objeto.gamertag,
       correo: objeto.correo,
     };
-    if (!nuevoJugador.nombre) {
-      return new NextResponse(
-        JSON.stringify({ error: "El nombre es obligatorio" }),
-        { status: 400, statusText: "Bad Request" }
+
+    // Validaciones de campos obligatorios (RF01)[cite: 1]
+    if (!nuevoJugador.nombre || !nuevoJugador.nombre.trim()) {
+      return NextResponse.json(
+        { error: "El nombre es obligatorio" },
+        { status: 400 }
       );
     }
-    if (!nuevoJugador.gamertag) {
-      return new NextResponse(
-        JSON.stringify({ error: "El gamertag es obligatorio" }),
-        { status: 400, statusText: "Bad Request" }
+    if (!nuevoJugador.gamertag || !nuevoJugador.gamertag.trim()) {
+      return NextResponse.json(
+        { error: "El gamertag es obligatorio" },
+        { status: 400 }
       );
     }
-    if (!nuevoJugador.correo) {
-      return new NextResponse(
-        JSON.stringify({ error: "El correo es obligatorio" }),
-        { status: 400, statusText: "Bad Request" }
+    if (!nuevoJugador.correo || !nuevoJugador.correo.trim()) {
+      return NextResponse.json(
+        { error: "El correo es obligatorio" },
+        { status: 400 }
       );
     }
-    await crearJugador(
-     nuevoJugador
-    );
+
+    // Inserción en la base de datos MySQL
+    const resultado = await crearJugador(nuevoJugador);
     console.log("Jugador agregado:", nuevoJugador);
-    return new NextResponse(
-      JSON.stringify(nuevoJugador, { status: 201, statusText: "Created" })
+
+    return NextResponse.json(
+      { mensaje: "Jugador registrado exitosamente", jugador: nuevoJugador },
+      { status: 201 }
     );
+
   } catch (error) {
     console.error("Error al agregar jugador:", error);
-    return new NextResponse(
-      JSON.stringify({ error: "Error al agregar jugador" }),
-      { status: 500, statusText: "Internal Server Error" }
+
+    // Capturar intento de Gamertag duplicado (ER_DUP_ENTRY en MySQL o throw manual)[cite: 1]
+    if (
+      error.code === 'ER_DUP_ENTRY' || 
+      error.message?.includes("DUPLICADO") || 
+      error.message?.includes("existe")
+    ) {
+      return NextResponse.json(
+        { error: "El Gamertag o Correo ya se encuentra registrado." },
+        { status: 409 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Error interno al agregar jugador" },
+      { status: 500 }
     );
   }
 }
