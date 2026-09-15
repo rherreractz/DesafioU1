@@ -2,6 +2,27 @@
 
 import { useState } from 'react';
 
+const GENEROS_VIDEOJUEGOS = [
+  'Acción',
+  'Aventura',
+  'Arcade',
+  'Battle Royale',
+  'Carreras / Conducción',
+  'Deportes',
+  'Estrategia (RTS / TBS)',
+  'Lucha / Pelea',
+  'MMORPG',
+  'Moba',
+  'Plataformas',
+  'Puzle / Acertijos',
+  'RPG / Rol',
+  'Shooter (FPS / TPS)',
+  'Simulación',
+  'Supervivencia',
+  'Terror / Horror',
+  'Otros'
+];
+
 export default function RegistroJuego({ onJuegoRegistrado }) {
   const [nombre, setNombre] = useState('');
   const [genero, setGenero] = useState('');
@@ -9,7 +30,6 @@ export default function RegistroJuego({ onJuegoRegistrado }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Objeto JSON Videojuego enviado al servidor
     const videojuegoPayload = {
       nombre,
       genero
@@ -45,20 +65,27 @@ export default function RegistroJuego({ onJuegoRegistrado }) {
           required
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
-          className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white"
+          className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white focus:outline-none focus:border-indigo-500"
         />
       </div>
 
       <div>
         <label className="block text-sm text-gray-300 mb-1">Género *</label>
-        <input
-          type="text"
+        <select
           required
-          placeholder="Ej. RPG, Acción, Deportes"
           value={genero}
           onChange={(e) => setGenero(e.target.value)}
-          className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white"
-        />
+          className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white focus:outline-none focus:border-indigo-500"
+        >
+          <option value="" disabled>
+            Selecciona un género...
+          </option>
+          {GENEROS_VIDEOJUEGOS.map((itemGenera) => (
+            <option key={itemGenera} value={itemGenera}>
+              {itemGenera}
+            </option>
+          ))}
+        </select>
       </div>
 
       <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded transition">

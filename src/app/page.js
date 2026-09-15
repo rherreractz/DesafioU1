@@ -13,7 +13,7 @@ export default function Home() {
   const [jugadores, setJugadores] = useState([]);
   const [notificacion, setNotificacion] = useState(null);
   
-  // Estado para controlar la sección principal ('dashboard' | 'registros' | 'buscar')
+  // Estado para controlar la sección principal ('dashboard' | 'registros' | 'buscar' | 'estado')
   const [vistaActiva, setVistaActiva] = useState('dashboard');
   
   // Estado para controlar el sub-registro activo ('jugador' | 'videojuego' | 'puntuacion')
@@ -54,8 +54,8 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Navegación Principal */}
-          <nav className="flex bg-gray-800 p-1 rounded-lg border border-gray-700">
+          {/* Navegación Principal con las rutas preservadas */}
+          <nav className="flex flex-wrap bg-gray-800 p-1 rounded-lg border border-gray-700 gap-1">
             <button
               onClick={() => setVistaActiva('dashboard')}
               className={`px-4 py-2 text-sm font-semibold rounded-md transition ${
@@ -66,6 +66,7 @@ export default function Home() {
             >
               Dashboard & Ranking
             </button>
+
             <button
               onClick={() => setVistaActiva('registros')}
               className={`px-4 py-2 text-sm font-semibold rounded-md transition ${
@@ -76,6 +77,7 @@ export default function Home() {
             >
               Registros
             </button>
+
             <button
               onClick={() => setVistaActiva('buscar')}
               className={`px-4 py-2 text-sm font-semibold rounded-md transition ${
@@ -85,6 +87,17 @@ export default function Home() {
               }`}
             >
               Buscar Jugador
+            </button>
+
+            <button
+              onClick={() => setVistaActiva('estado')}
+              className={`px-4 py-2 text-sm font-semibold rounded-md transition ${
+                vistaActiva === 'estado'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Estado de Jugador
             </button>
           </nav>
         </header>
@@ -106,13 +119,8 @@ export default function Home() {
         {vistaActiva === 'dashboard' && (
           <div className="space-y-6">
             <EstadisticasEvento />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
-              <div className="lg:col-span-2">
-                <Clasificacion />
-              </div>
-              <div>
-                <EstadoJugador jugadores={jugadores} />
-              </div>
+            <div className="w-full">
+              <Clasificacion />
             </div>
           </div>
         )}
@@ -120,7 +128,6 @@ export default function Home() {
         {/* SECCIÓN 2: REGISTROS SEPARADOS POR PESTAÑAS */}
         {vistaActiva === 'registros' && (
           <div className="space-y-6">
-            {/* Sub-Navegación para seleccionar qué formulario ver */}
             <div className="flex border-b border-gray-800 gap-4 pb-2">
               <button
                 onClick={() => setSubRegistroActivo('jugador')}
@@ -154,7 +161,6 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Renderizado individual según la pestaña elegida */}
             <div className="max-w-xl mx-auto w-full">
               {subRegistroActivo === 'jugador' && (
                 <RegistroJugador
@@ -196,10 +202,17 @@ export default function Home() {
           </div>
         )}
 
-        {/* SECCIÓN 3: BÚSQUEDA DE JUGADORES */}
+        {/* SECCIÓN 3: BÚSQUEDA GENERAL DE JUGADORES */}
         {vistaActiva === 'buscar' && (
           <div className="w-full">
             <BuscadorJugador />
+          </div>
+        )}
+
+        {/* SECCIÓN 4: CONSULTA Y EXPEDIENTE DE ESTADO DE JUGADORES */}
+        {vistaActiva === 'estado' && (
+          <div className="w-full">
+            <EstadoJugador jugadores={jugadores} />
           </div>
         )}
       </main>
