@@ -24,27 +24,38 @@ export async function crearPuntuacion(puntuacion) {
     puntuacion: puntuacion.puntuacion,
     fecha: new Date().toISOString(),
   };
+  
   console.log("Nueva puntuación:", nuevaPuntuacion);
+  
   const jugadores = await getJugadores();
   const videojuegos = await getVideojuegos();
+  
   console.log("Jugadores:", jugadores);
   console.log("Videojuegos:", videojuegos);
+
+  // Normalización a String para evitar fallos si el ID es number o string
   const jugadorValido = jugadores.some(
-    (jugador) => jugador.id === nuevaPuntuacion.jugadorId
+    (jugador) => String(jugador.id) === String(nuevaPuntuacion.jugadorId)
   );
+  
   const videojuegoValido = videojuegos.some(
-    (videojuego) => videojuego.id === nuevaPuntuacion.videojuegoId
+    (videojuego) => String(videojuego.id) === String(nuevaPuntuacion.videojuegoId)
   );
+
   if (!jugadorValido) {
-    throw new Error("El jugador especificado no existe.");
+    throw new Error("NOT_FOUND: El jugador especificado no existe.");
   }
+  
   if (!videojuegoValido) {
-    throw new Error("El videojuego especificado no existe.");
+    throw new Error("NOT_FOUND: El videojuego especificado no existe.");
   }
-  registrarPuntuacion(
+
+  // AWAIT OBLIGATORIO: Esperar a que la consulta SQL en MySQL finalice
+  await registrarPuntuacion(
     nuevaPuntuacion.jugadorId,
     nuevaPuntuacion.videojuegoId,
     nuevaPuntuacion.puntuacion
   );
+
   return nuevaPuntuacion;
 }
