@@ -1,10 +1,11 @@
 /*
 Objeto JSON Videojuego: {
-id: number;
-nombre: string;
-genero: string;
+  id: number;
+  nombre: string;
+  genero: string;
 }
 */
+
 import {
   obtenerVideojuegos,
   registrarVideojuego,
@@ -12,29 +13,37 @@ import {
 
 export async function getVideojuegos() {
   const videojuegosDB = await obtenerVideojuegos();
-  const videojuegos = videojuegosDB.map((videojuego) => ({
+  return (videojuegosDB || []).map((videojuego) => ({
     id: videojuego.id,
     nombre: videojuego.nombre,
     genero: videojuego.genero,
   }));
-  return videojuegos;
 }
 
 export async function registrarUnVideojuego(videojuego) {
   const nuevoVideojuego = {
-    nombre: videojuego.nombre,
-    genero: videojuego.genero,
+    nombre: videojuego.nombre.trim(),
+    genero: videojuego.genero.trim(),
   };
-  const existeVideojuego = determinarSiExisteElVideojuego(
+
+  // CORRECCIÓN CLAVE: Agregar 'await' porque determinarSiExisteElVideojuego es una función asíncrona
+  const existeVideojuego = await determinarSiExisteElVideojuego(
     nuevoVideojuego.nombre
   );
+
   if (existeVideojuego) {
     throw new Error("El videojuego ya existe.");
   }
+
   await registrarVideojuego(nuevoVideojuego.nombre, nuevoVideojuego.genero);
 }
 
 export async function determinarSiExisteElVideojuego(nombre) {
   const videojuegos = await obtenerVideojuegos();
-  return videojuegos.some((v) => v.nombre === nombre);
+  if (!videojuegos || !Array.isArray(videojuegos)) return false;
+
+  // Comparación insensible a mayúsculas/minúsculas
+  return videojuegos.some(
+    (v) => (v.nombre || "").toLowerCase() === nombre.toLowerCase()
+  );
 }
